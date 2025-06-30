@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function JoinPage() {
+export default function JoinPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
