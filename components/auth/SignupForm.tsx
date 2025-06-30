@@ -23,11 +23,6 @@ import { ReferralInfo } from "../ReferralInfo";
 import { SocialButtons } from "../SocialButtons";
 import { SignUpInput } from "../SignUpInput";
 
-interface ReferralResult {
-  success: boolean;
-  message?: string;
-}
-
 export default function SignupForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

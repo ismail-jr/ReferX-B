@@ -41,7 +41,7 @@ export default function VerifyEmailPage() {
         clearInterval(interval);
         router.push("/dashboard");
       }
-    }, 10000); // check every 10s
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [router]);
@@ -56,8 +56,8 @@ export default function VerifyEmailPage() {
           handleCodeInApp: true,
         });
         toast.success(`Verification email resent to ${user.email}`);
-        setCountdown(60); // reset countdown
-      } catch (error) {
+        setCountdown(60);
+      } catch {
         toast.error("Failed to resend verification email");
       } finally {
         setResending(false);
@@ -78,7 +78,7 @@ export default function VerifyEmailPage() {
       } else {
         toast.error("Email not verified yet. Check your inbox.");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error checking verification status");
     } finally {
       setChecking(false);
@@ -100,7 +100,7 @@ export default function VerifyEmailPage() {
             Verify Your Email
           </h1>
           <p className="text-gray-600 mt-2">
-            We&apos;ve sent a verification link to{" "}
+            {"We've sent a verification link to "}
             <span className="font-semibold text-blue-600">{email}</span>
           </p>
           <p className="text-gray-500 text-sm mt-2">
@@ -138,12 +138,12 @@ export default function VerifyEmailPage() {
                 : "bg-green-900 hover:bg-green-950 text-white"
             }`}
           >
-            {checking ? "Checking..." : "I have Verified My Email"}
+            {checking ? "Checking..." : "I've Verified My Email"}
           </motion.button>
         </div>
 
         <div className="mt-6 text-sm text-gray-500">
-          <p>Didn&apos;t receive the email?</p>
+          <p>{"Didn't receive the email?"}</p>
           <ul className="list-disc list-inside text-left mt-2 space-y-1">
             <li>Check your spam folder</li>
             <li>Make sure you entered {email} correctly</li>
