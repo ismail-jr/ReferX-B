@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     const ipCheck = await getDocs(query(referralsRef, where('newUserIP', '==', newUserIP)));
     if (!ipCheck.empty) {
-      return NextResponse.json({ error: 'This IP Address has already been used for referral. ' }, { status: 400 });
+      return NextResponse.json({ error: 'This IP Address has already been used for referral. Try new device ' }, { status: 400 });
     }
     
 
