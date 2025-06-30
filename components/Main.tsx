@@ -143,7 +143,7 @@ export default function Main() {
   }, [fetchDashboardData]);
 
   const referralLink = user?.uid
-    ? `${process.env.NEXT_PUBLIC_BASE_URL}/join?ref=${user.uid}`
+    ? `https://refer-sandy.vercel.app/join?ref=${user.uid}`
     : "";
 
   return (
