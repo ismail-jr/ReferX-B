@@ -61,10 +61,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'This email has already been referred.' }, { status: 400 });
     }
 
-    // const ipCheck = await getDocs(query(referralsRef, where('newUserIP', '==', newUserIP)));
-    // if (!ipCheck.empty) {
-    //   return NextResponse.json({ error: 'This IP Address has already been used for referral. ' }, { status: 400 });
-    // }
+    const ipCheck = await getDocs(query(referralsRef, where('newUserIP', '==', newUserIP)));
+    if (!ipCheck.empty) {
+      return NextResponse.json({ error: 'This IP Address has already been used for referral. ' }, { status: 400 });
+    }
     
 
     // ✅ Save referral record
