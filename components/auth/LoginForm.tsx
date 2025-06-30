@@ -10,7 +10,6 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   GithubAuthProvider,
-  sendEmailVerification,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import Link from "next/link";
@@ -33,34 +32,7 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-
-      // ✅ TEMPORARILY DISABLED: Skip email verification check for testing
-
-      if (!user.emailVerified) {
-        await sendEmailVerification(user);
-        await auth.signOut();
-
-        toast.error(
-          `Please verify your email first. A new verification link was sent to ${email}`,
-          {
-            position: "top-center",
-            style: {
-              background: "#fef2f2",
-              color: "#991b1b",
-              border: "1px solid #fecaca",
-            },
-            duration: 6000,
-          }
-        );
-        return;
-      }
-
+      await signInWithEmailAndPassword(auth, email, password);
       toast.success("Login successful!", {
         position: "top-center",
         style: {
@@ -70,6 +42,7 @@ export function LoginForm() {
         },
       });
       router.push("/dashboard");
+      return;
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Login failed";

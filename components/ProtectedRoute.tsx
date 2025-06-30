@@ -16,14 +16,23 @@ export default function ProtectedRoute({
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // TODO: Uncomment for production - email verification check
-        if (!user.emailVerified) {
+        // Check if user signed in with password (needs email verification)
+        // but skip for Google/Github/etc. providers (they're auto-verified)
+        const isEmailPasswordUser = user.providerData.some(
+          (provider) => provider.providerId === "password"
+        );
+
+        if (isEmailPasswordUser && !user.emailVerified) {
+          // Email/password user who hasn't verified - redirect to verification
           router.push("/verify-email");
         } else {
+          // Either:
+          // 1. Email/password user who IS verified, OR
+          // 2. Any OAuth provider user (Google/Github/etc.)
           setLoading(false);
         }
-        setLoading(false); // Development mode - skip email verification
       } else {
+        // No user - redirect to login
         router.push("/login");
       }
     });
