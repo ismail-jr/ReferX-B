@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, ArrowRight, EyeOff, Eye, HandCoins } from "lucide-react";
+import { Mail, EyeOff, Eye, HandCoins } from "lucide-react";
 import { toast } from "react-hot-toast";
 import {
   signInWithEmailAndPassword,
