@@ -6,11 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   signInWithPopup,
   GoogleAuthProvider,
   GithubAuthProvider,
   updateProfile,
   User,
+  AuthError,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -20,6 +22,11 @@ import { BrandHeader } from "../BrandHeader";
 import { ReferralInfo } from "../ReferralInfo";
 import { SocialButtons } from "../SocialButtons";
 import { SignUpInput } from "../SignUpInput";
+
+interface ReferralResult {
+  success: boolean;
+  message?: string;
+}
 
 export default function SignupForm() {
   const [name, setName] = useState("");
@@ -63,35 +70,60 @@ export default function SignupForm() {
     setEmailError("");
 
     try {
+      // 1. Create user account
       const result = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
+      const user = result.user;
 
-      // ✅ Update Firebase Auth user profile with name
-      await updateProfile(result.user, { displayName: name });
+      // 2. Update profile with display name
+      await updateProfile(user, { displayName: name });
 
-      // ✅ Handle referral and pass the name
-      const referralResult = await handleReferral(ref, result.user, name);
-      if (!referralResult.success) {
-        setReferralError(referralResult.message || "Referral failed.");
-        await result.user.delete();
-        setIsLoading(false);
-        return;
+      // 3. Handle referral if exists
+      if (ref) {
+        const referralResult = await handleReferral(ref, user, name);
+        if (!referralResult.success) {
+          setReferralError(referralResult.message || "Referral failed.");
+          await user.delete();
+          return;
+        }
       }
 
-      await createUserRecord(result.user, name, ref);
-      router.push("/dashboard");
-    } catch (error: any) {
-      const friendlyMessage = parseFirebaseError(error);
-      if (
-        error.code === "auth/email-already-in-use" ||
-        error.code === "auth/invalid-email"
-      ) {
-        setEmailError(friendlyMessage);
+      // 4. Create user record in Firestore
+      await createUserRecord(user, name, ref);
+
+      // 5. Send verification email
+      await sendEmailVerification(user, {
+        url: `${window.location.origin}/dashboard`, // Where to redirect after verification
+        handleCodeInApp: true,
+      });
+
+      // 6. Show success message and redirect
+      toast.success(
+        `Verification email sent to ${email}. Please verify your email to continue.`,
+        {
+          duration: 5000,
+          position: "top-center",
+        }
+      );
+
+      // 7. Redirect to verify-email page with user's email
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        const friendlyMessage = parseFirebaseError(error);
+        if (
+          (error as AuthError).code === "auth/email-already-in-use" ||
+          (error as AuthError).code === "auth/invalid-email"
+        ) {
+          setEmailError(friendlyMessage);
+        } else {
+          setReferralError(friendlyMessage);
+        }
       } else {
-        setReferralError(friendlyMessage);
+        setReferralError("An unknown error occurred");
       }
     } finally {
       setIsLoading(false);
@@ -108,7 +140,6 @@ export default function SignupForm() {
 
       const result = await signInWithPopup(auth, provider);
 
-      // ✅ If name was typed in manually, update displayName
       if (name) {
         await updateProfile(result.user, { displayName: name });
       }
@@ -120,7 +151,6 @@ export default function SignupForm() {
         if (!referralResult.success) {
           setReferralError(referralResult.message || "Referral failed.");
           await auth.signOut();
-          setIsLoading(false);
           return;
         }
       }
@@ -166,6 +196,7 @@ export default function SignupForm() {
       <SocialButtons
         onGoogle={() => handleOAuth("google")}
         onGitHub={() => handleOAuth("github")}
+        isLoading={isLoading}
       />
     </motion.div>
   );

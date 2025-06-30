@@ -41,26 +41,25 @@ export function LoginForm() {
       const user = userCredential.user;
 
       // ✅ TEMPORARILY DISABLED: Skip email verification check for testing
-      /*
+
       if (!user.emailVerified) {
         await sendEmailVerification(user);
         await auth.signOut();
-  
+
         toast.error(
           `Please verify your email first. A new verification link was sent to ${email}`,
           {
-            position: 'top-center',
+            position: "top-center",
             style: {
-              background: '#fef2f2',
-              color: '#991b1b',
-              border: '1px solid #fecaca',
+              background: "#fef2f2",
+              color: "#991b1b",
+              border: "1px solid #fecaca",
             },
-            duration: 6000
+            duration: 6000,
           }
         );
         return;
       }
-      */
 
       toast.success("Login successful!", {
         position: "top-center",

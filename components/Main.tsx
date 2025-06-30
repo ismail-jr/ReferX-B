@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import {
@@ -45,6 +45,93 @@ export default function Main() {
   const [recentActivity, setRecentActivity] = useState<ReferralActivity[]>([]);
   const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
 
+  const fetchDashboardData = useCallback(
+    async (uid: string) => {
+      const userDocRef = doc(db, "users", uid);
+      const userDocSnap = await getDoc(userDocRef);
+      const userData = userDocSnap.data();
+      setUserStats(userData || null);
+
+      if (userData?.referredBy) {
+        const referrerSnap = await getDoc(
+          doc(db, "users", userData.referredBy)
+        );
+        const referrerData = referrerSnap.exists() ? referrerSnap.data() : null;
+        const referrerName =
+          referrerData?.displayName || referrerData?.email || "someone";
+        setWelcomeMessage(` You were referred by ${referrerName}. Welcome!`);
+
+        setTimeout(() => {
+          setWelcomeMessage(null);
+        }, 6000);
+      }
+
+      const leaderboardQuery = query(
+        collection(db, "users"),
+        orderBy("points", "desc"),
+        limit(5)
+      );
+      const leaderboardSnap = await getDocs(leaderboardQuery);
+
+      const leaderboardData: LeaderboardItem[] = leaderboardSnap.docs.map(
+        (doc, index) => {
+          const data = doc.data();
+          const name =
+            (data.displayName &&
+              data.displayName.trim() !== "" &&
+              data.displayName) ||
+            data.email ||
+            "Anonymous";
+
+          return {
+            rank: index + 1,
+            name,
+            referrals: data.points || 0,
+          };
+        }
+      );
+
+      const currentName =
+        (userData?.displayName && userData.displayName.trim()) ||
+        user?.displayName ||
+        user?.email ||
+        "User";
+
+      const currentUserInList = leaderboardData.some(
+        (item) => item.name === currentName
+      );
+
+      if (!currentUserInList) {
+        leaderboardData.push({
+          rank: leaderboardData.length + 1,
+          name: currentName,
+          referrals: userData?.points || 0,
+        });
+      }
+
+      setLeaderboard(leaderboardData);
+
+      const activityQuery = query(
+        collection(db, "referrals"),
+        where("referrerId", "==", uid),
+        orderBy("createdAt", "desc"),
+        limit(5)
+      );
+      const activitySnap = await getDocs(activityQuery);
+      const activityData: ReferralActivity[] = activitySnap.docs.map((doc) => {
+        const data = doc.data() as DocumentData;
+        return {
+          id: doc.id,
+          newUserEmail: data.newUserEmail,
+          createdAt: data.createdAt.toDate(),
+        };
+      });
+
+      setRecentActivity(activityData);
+    },
+    [user]
+  );
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
@@ -53,93 +140,7 @@ export default function Main() {
       }
     });
     return () => unsubscribe();
-  }, []);
-
-  const fetchDashboardData = async (uid: string) => {
-    const userDocRef = doc(db, "users", uid);
-    const userDocSnap = await getDoc(userDocRef);
-    const userData = userDocSnap.data();
-    setUserStats(userData || null);
-
-    // 🎉 Show welcome message if referred
-    if (userData?.referredBy) {
-      const referrerSnap = await getDoc(doc(db, "users", userData.referredBy));
-      const referrerData = referrerSnap.exists() ? referrerSnap.data() : null;
-      const referrerName =
-        referrerData?.displayName || referrerData?.email || "someone";
-      setWelcomeMessage(` You were referred by ${referrerName}. Welcome!`);
-
-      // Auto-dismiss after 6 seconds
-      setTimeout(() => {
-        setWelcomeMessage(null);
-      }, 6000);
-    }
-
-    // 🏆 Leaderboard
-    const leaderboardQuery = query(
-      collection(db, "users"),
-      orderBy("points", "desc"),
-      limit(5)
-    );
-    const leaderboardSnap = await getDocs(leaderboardQuery);
-
-    const leaderboardData: LeaderboardItem[] = leaderboardSnap.docs.map(
-      (doc, index) => {
-        const data = doc.data();
-        const name =
-          (data.displayName &&
-            data.displayName.trim() !== "" &&
-            data.displayName) ||
-          data.email ||
-          "Anonymous";
-
-        return {
-          rank: index + 1,
-          name,
-          referrals: data.points || 0,
-        };
-      }
-    );
-
-    const currentName =
-      (userData?.displayName && userData.displayName.trim()) ||
-      user?.displayName ||
-      user?.email ||
-      "User";
-
-    const currentUserInList = leaderboardData.some(
-      (item) => item.name === currentName
-    );
-
-    if (!currentUserInList) {
-      leaderboardData.push({
-        rank: leaderboardData.length + 1,
-        name: currentName,
-        referrals: userData?.points || 0,
-      });
-    }
-
-    setLeaderboard(leaderboardData);
-
-    // 📬 Referral activity
-    const activityQuery = query(
-      collection(db, "referrals"),
-      where("referrerId", "==", uid),
-      orderBy("createdAt", "desc"),
-      limit(5)
-    );
-    const activitySnap = await getDocs(activityQuery);
-    const activityData: ReferralActivity[] = activitySnap.docs.map((doc) => {
-      const data = doc.data() as DocumentData;
-      return {
-        id: doc.id,
-        newUserEmail: data.newUserEmail,
-        createdAt: data.createdAt.toDate(),
-      };
-    });
-
-    setRecentActivity(activityData);
-  };
+  }, [fetchDashboardData]);
 
   const referralLink = user?.uid
     ? `${process.env.NEXT_PUBLIC_BASE_URL}/join?ref=${user.uid}`
@@ -147,7 +148,6 @@ export default function Main() {
 
   return (
     <div className="space-y-6 pl-5">
-      {/* 🎉 Auto-dismiss welcome toast */}
       <AnimatePresence>
         {welcomeMessage && (
           <motion.div
@@ -172,7 +172,6 @@ export default function Main() {
 
       <DashboardStats user={user} stats={userStats} leaderboard={leaderboard} />
       <LeaderboardSection
-        user={user}
         userName={
           userStats?.displayName || user?.displayName || user?.email || "User"
         }

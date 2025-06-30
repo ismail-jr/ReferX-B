@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { Trophy, Gift, Crown } from "lucide-react";
-import type { User } from "firebase/auth";
 
 export interface LeaderboardItem {
   rank: number;
@@ -16,29 +15,23 @@ export interface ReferralActivity {
   createdAt: Date;
 }
 
-export default function LeaderboardSection({
-  user,
-  userName,
-  leaderboard,
-  recentActivity,
-}: {
-  user: User | null;
+interface LeaderboardSectionProps {
   userName: string;
   leaderboard: LeaderboardItem[];
   recentActivity: ReferralActivity[];
-}) {
+}
+
+export default function LeaderboardSection({
+  userName,
+  leaderboard,
+  recentActivity,
+}: LeaderboardSectionProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Leaderboard */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 lg:col-span-2">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-blue-900">Leaderboard</h2>
-          {/* <a
-            href="/dashboard/leaderboard"
-            className="text-sm text-blue-700 hover:underline"
-          >
-            View all
-          </a> */}
           <Crown className="text-blue-900 cursor-pointer" />
         </div>
         <div className="space-y-3">

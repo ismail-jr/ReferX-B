@@ -5,7 +5,7 @@ import { Gift, TrendingUp, ShieldCheck, HandCoins } from "lucide-react";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row bg-gradient-to-br from-blue-800 to-blue-600">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row bg-gradient-to-br">
       {/* Left: Form Section */}
       <motion.div
         initial={{ opacity: 0 }}

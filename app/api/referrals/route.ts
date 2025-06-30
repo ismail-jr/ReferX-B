@@ -55,17 +55,17 @@ export async function POST(req: NextRequest) {
     const referralsRef = collection(db, 'referrals');
 
     // 🛡 Optional: Enable fraud checks in production
-    /*
+    
     const emailCheck = await getDocs(query(referralsRef, where('newUserEmail', '==', newUserEmail)));
     if (!emailCheck.empty) {
       return NextResponse.json({ error: 'This email has already been referred.' }, { status: 400 });
     }
 
-    const ipCheck = await getDocs(query(referralsRef, where('newUserIP', '==', newUserIP)));
-    if (!ipCheck.empty) {
-      return NextResponse.json({ error: 'This IP has already been used for referral.' }, { status: 400 });
-    }
-    */
+    // const ipCheck = await getDocs(query(referralsRef, where('newUserIP', '==', newUserIP)));
+    // if (!ipCheck.empty) {
+    //   return NextResponse.json({ error: 'This IP Address has already been used for referral. ' }, { status: 400 });
+    // }
+    
 
     // ✅ Save referral record
     const newRef = doc(referralsRef);
