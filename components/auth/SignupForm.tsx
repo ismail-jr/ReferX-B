@@ -22,6 +22,8 @@ import { BrandHeader } from "../BrandHeader";
 import { ReferralInfo } from "../ReferralInfo";
 import { SocialButtons } from "../SocialButtons";
 import { SignUpInput } from "../SignUpInput";
+import AuthLayout from "@/components/auth/AuthLayout";
+import { AuthDivider } from "../AuthDivider";
 
 export default function SignupForm() {
   const [name, setName] = useState("");
@@ -65,7 +67,6 @@ export default function SignupForm() {
     setEmailError("");
 
     try {
-      // 1. Create user account
       const result = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -73,10 +74,8 @@ export default function SignupForm() {
       );
       const user = result.user;
 
-      // 2. Update profile with display name
       await updateProfile(user, { displayName: name });
 
-      // 3. Handle referral if exists
       if (ref) {
         const referralResult = await handleReferral(ref, user, name);
         if (!referralResult.success) {
@@ -86,16 +85,13 @@ export default function SignupForm() {
         }
       }
 
-      // 4. Create user record in Firestore
       await createUserRecord(user, name, ref);
 
-      // 5. Send verification email
       await sendEmailVerification(user, {
-        url: `${window.location.origin}/dashboard`, // Where to redirect after verification
+        url: `${window.location.origin}/dashboard`,
         handleCodeInApp: true,
       });
 
-      // 6. Show success message and redirect
       toast.success(
         `Verification email sent to ${email}. Please verify your email to continue.`,
         {
@@ -104,7 +100,6 @@ export default function SignupForm() {
         }
       );
 
-      // 7. Redirect to verify-email page with user's email
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -163,36 +158,53 @@ export default function SignupForm() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="w-full max-w-md mx-auto p-8 mt-10 rounded-2xl shadow-lg border border-gray-200"
-    >
-      <BrandHeader />
+    <AuthLayout>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-md mx-auto p-8 mt-10 rounded-2xl shadow-lg border border-gray-200"
+      >
+        <BrandHeader />
 
-      <SignUpInput
-        name={name}
-        setName={setName}
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        emailError={emailError}
-        isLoading={isLoading}
-        onSubmit={handleSubmit}
-      />
+        <SignUpInput
+          name={name}
+          setName={setName}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          emailError={emailError}
+          isLoading={isLoading}
+          onSubmit={handleSubmit}
+        />
+        <AuthDivider />
 
-      {ref && <ReferralInfo refCode={ref} />}
-      {referralError && (
-        <p className="mt-2 text-sm text-red-600 font-medium">{referralError}</p>
-      )}
+        {ref && <ReferralInfo refCode={ref} />}
+        {referralError && (
+          <p className="mt-2 text-sm text-red-600 font-medium">
+            {referralError}
+          </p>
+        )}
 
-      <SocialButtons
-        onGoogle={() => handleOAuth("google")}
-        onGitHub={() => handleOAuth("github")}
-        isLoading={isLoading}
-      />
-    </motion.div>
+        <SocialButtons
+          onGoogle={() => handleOAuth("google")}
+          onGitHub={() => handleOAuth("github")}
+          isLoading={isLoading}
+        />
+
+        <div className="pt-6 border-t border-gray-100 text-center mt-6">
+          <p className="text-sm text-gray-500">
+            Already have an account?{" "}
+            <a
+              href="/login"
+              className="font-medium text-blue-900 hover:text-blue-950 transition-colors"
+            >
+              Log in
+            </a>
+          </p>
+        </div>
+      </motion.div>
+    </AuthLayout>
   );
 }

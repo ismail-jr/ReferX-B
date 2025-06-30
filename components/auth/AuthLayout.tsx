@@ -1,17 +1,18 @@
 "use client";
+
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
 import { Gift, TrendingUp, ShieldCheck, HandCoins } from "lucide-react";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row bg-gradient-to-br">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row bg-gradient-to-br from-white to-fuchsia-50/20">
       {/* Left: Form Section */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-white to-fuchsia-50/20"
+        className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8"
       >
         <motion.div
           initial={{ y: 20 }}
@@ -23,8 +24,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </motion.div>
       </motion.div>
 
-      {/* Right: Graphic Section */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-8 relative overflow-hidden bg-gradient-to-br from-fuchsia-50 to-white">
+      {/* Right: Graphic Section (now visible on all screens) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative overflow-hidden bg-gradient-to-br from-fuchsia-50 to-white">
         {/* Decorative elements */}
         <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-fuchsia-100/30 blur-xl"></div>
         <div className="absolute -left-20 bottom-0 w-72 h-72 rounded-full bg-fuchsia-200/20 blur-xl"></div>
@@ -33,7 +34,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="relative z-10 max-w-md p-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-lg"
+          className="relative z-10 max-w-md w-full p-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-lg"
         >
           {/* Brand Logo */}
           <motion.div
@@ -42,7 +43,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             transition={{ type: "spring", stiffness: 200 }}
             className="flex justify-center mb-8"
           >
-            <div className="flex items-center gap-2 mb-8 pl-2 pt-6">
+            <div className="flex items-center gap-2 pl-2 pt-6">
               <div className="bg-blue-900 p-2 rounded-lg">
                 <HandCoins className="text-white" size={20} />
               </div>

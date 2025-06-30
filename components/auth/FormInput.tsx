@@ -1,5 +1,5 @@
-import { Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 type IconProps = {
   size?: number;
@@ -8,7 +8,7 @@ type IconProps = {
 };
 
 export function FormInput({
-  type = 'text',
+  type = "text",
   label,
   icon: Icon,
   ...props
@@ -29,11 +29,13 @@ export function FormInput({
           <Icon size={18} className="text-gray-400" />
         </div>
         <input
-          type={type === 'password' ? (showPassword ? 'text' : 'password') : type}
-          className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+          type={
+            type === "password" ? (showPassword ? "text" : "password") : type
+          }
+          className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900"
           {...props}
         />
-        {type === 'password' && (
+        {type === "password" && (
           <button
             type="button"
             className="absolute inset-y-0 right-0 pr-3 flex items-center"
