@@ -1,6 +1,6 @@
 // utils/handleReferral.ts
-import { User } from 'firebase/auth';
-import { db } from '@/lib/firebase';
+import { User } from "firebase/auth";
+import { db } from "@/lib/firebase";
 import {
   collection,
   doc,
@@ -9,7 +9,7 @@ import {
   updateDoc,
   where,
   setDoc,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
 export const handleReferral = async (
   refCode: string | null,
@@ -23,44 +23,63 @@ export const handleReferral = async (
   try {
     // Get user by referralCode instead of UID
     const refQuery = query(
-      collection(db, 'users'),
-      where('referralCode', '==', refCode)
+      collection(db, "users"),
+      where("referralCode", "==", refCode)
     );
 
     const refSnap = await getDocs(refQuery);
     if (refSnap.empty) {
-      return { success: false, message: 'Invalid referral code.' };
+      return { success: false, message: "Invalid referral code." };
     }
 
     const referrerDoc = refSnap.docs[0];
     const referrerId = referrerDoc.id;
 
     if (referrerId === user.uid) {
-      return { success: false, message: 'You cannot refer yourself.' };
+      return { success: false, message: "You cannot refer yourself." };
     }
 
-    // IP check
-    const ipRes = await fetch('https://api.ipify.org?format=json');
+    // Get user's public IP address
+    const ipRes = await fetch("https://api.ipify.org?format=json");
     const { ip } = await ipRes.json();
 
-    // Save referral
-    await setDoc(doc(collection(db, 'referrals')), {
+    // ❌ Block if IP was already used
+    const ipQuery = query(
+      collection(db, "referrals"),
+      where("newUserIP", "==", ip)
+    );
+    const ipSnap = await getDocs(ipQuery);
+    if (!ipSnap.empty) {
+      return {
+        success: false,
+        message: "Referral blocked: This IP has already been used.",
+      };
+    }
+
+    // ✅ Save referral
+    await setDoc(doc(collection(db, "referrals")), {
       referrerId,
       newUserUID: user.uid,
       newUserEmail: user.email,
-      newUserName: name || user.displayName || '',
+      newUserName: name || user.displayName || "",
       newUserIP: ip,
       createdAt: new Date(),
     });
 
-    // Increment referrer points
-    await updateDoc(doc(db, 'users', referrerId), {
+    // ✅ Increment referrer points
+    await updateDoc(doc(db, "users", referrerId), {
       points: (referrerDoc.data().points || 0) + 1,
     });
 
-    return { success: true, message: 'Referral successful.' };
+    return {
+      success: true,
+      message: "Referral successful.",
+    };
   } catch (err) {
-    console.error('Referral tracking failed:', err);
-    return { success: false, message: 'Referral tracking failed.' };
+    console.error("Referral tracking failed:", err);
+    return {
+      success: false,
+      message: "Referral tracking failed.",
+    };
   }
 };

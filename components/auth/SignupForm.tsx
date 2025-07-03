@@ -101,9 +101,21 @@ export default function SignupForm() {
 
       if (ref) {
         const referralResult = await handleReferral(ref, user, name);
+
         if (!referralResult.success) {
           setReferralError(referralResult.message || "Referral failed.");
-          await user.delete();
+
+          // Delete the newly created Firebase Auth user to prevent ghost accounts
+          try {
+            await user.delete();
+          } catch (deleteError) {
+            console.error(
+              "Error deleting user after referral failure:",
+              deleteError
+            );
+          }
+
+          setIsLoading(false);
           return;
         }
       }
