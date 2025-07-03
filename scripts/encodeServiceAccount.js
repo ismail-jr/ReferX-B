@@ -1,3 +1,4 @@
+//D:\ismail\referx\scripts\encodeServiceAccount.js
 const fs = require('fs');
 const path = require('path');
 

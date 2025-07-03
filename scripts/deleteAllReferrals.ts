@@ -2,11 +2,12 @@ import admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { readFileSync } from 'fs';
 
-// Load service account JSON from file (or use process.env if using base64 method)
+// Load service account credentials
 const serviceAccount = JSON.parse(
-  readFileSync('./serviceAccountKey.json', 'utf-8')
+  readFileSync('./serviceAccount.json', 'utf-8')
 );
 
+// Initialize Firebase Admin SDK
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -15,12 +16,12 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 
-async function deleteAllUserDocs() {
-  const usersRef = db.collection('users');
-  const snapshot = await usersRef.get();
+async function deleteAllReferralDocs() {
+  const referralsRef = db.collection('referrals');
+  const snapshot = await referralsRef.get();
 
   if (snapshot.empty) {
-    console.log('No user documents found in Firestore.');
+    console.log('❌ No referral documents found in Firestore.');
     return;
   }
 
@@ -31,7 +32,7 @@ async function deleteAllUserDocs() {
   });
 
   await batch.commit();
-  console.log(`✅ Deleted ${snapshot.size} user document(s) from Firestore.`);
+  console.log(`✅ Deleted ${snapshot.size} referral document(s) from Firestore.`);
 }
 
-deleteAllUserDocs().catch(console.error);
+deleteAllReferralDocs().catch(console.error);
