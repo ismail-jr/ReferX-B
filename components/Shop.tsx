@@ -9,11 +9,9 @@ import {
   getDoc,
   getDocs,
   limit,
-  orderBy,
   query,
   where,
 } from "firebase/firestore";
-import type { DocumentData } from "firebase/firestore";
 
 import ProjectShopSection, { ShopItem } from "./ShopSection";
 import { motion, AnimatePresence } from "framer-motion";
@@ -62,8 +60,6 @@ export default function Shop() {
         setWelcomeMessage(null);
       }, 6000);
     }
-
-    // Removed unused recentActivity fetch
   }, []);
 
   const fetchShopItems = useCallback(async () => {
@@ -106,7 +102,7 @@ export default function Shop() {
 
       if (result.success) {
         toast.success(result.message);
-        await fetchDashboardData(user.uid); // Refresh reward stats
+        await fetchDashboardData(user.uid);
       } else {
         toast.error(result.message);
       }

@@ -69,7 +69,7 @@ export default function Main() {
 
         setTimeout(() => {
           setWelcomeMessage(null);
-        }, 6000);
+        }, 100);
       }
 
       const leaderboardQuery = query(

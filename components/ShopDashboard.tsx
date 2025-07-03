@@ -59,7 +59,6 @@ function StatCard({
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    let start = 0;
     const end = Number(value);
     if (isNaN(end)) return;
 
@@ -80,10 +79,10 @@ function StatCard({
       }
     };
 
-    requestAnimationFrame(animate);
+    const animationId = requestAnimationFrame(animate);
 
     return () => {
-      // Cleanup if component unmounts during animation
+      cancelAnimationFrame(animationId);
     };
   }, [value, decimals]);
 
