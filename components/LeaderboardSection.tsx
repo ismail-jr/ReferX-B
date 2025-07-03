@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Trophy, Gift, Crown } from "lucide-react";
+import { Trophy, Gift, Crown, UserPlus } from "lucide-react";
+import { format } from "date-fns";
 
 export interface LeaderboardItem {
   rank: number;
@@ -20,11 +21,15 @@ interface LeaderboardSectionProps {
   userName: string;
   leaderboard: LeaderboardItem[];
   recentActivity: ReferralActivity[];
+  referredBy?: string;
+  joinedAt?: Date;
 }
 
 export default function LeaderboardSection({
   userName,
   leaderboard,
+  referredBy,
+  joinedAt,
 }: LeaderboardSectionProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -34,7 +39,8 @@ export default function LeaderboardSection({
           <h2 className="text-lg font-semibold text-blue-900">Leaderboard</h2>
           <Crown className="text-blue-900 cursor-pointer" />
         </div>
-        <div className="space-y-3">
+
+        <div className="space-y-3 mb-4">
           {leaderboard.map((item, index) => {
             const isCurrentUser = item.name === userName;
             let icon = null;
@@ -88,6 +94,28 @@ export default function LeaderboardSection({
             );
           })}
         </div>
+
+        {/* Referred Info */}
+        {(referredBy || joinedAt) && (
+          <div className="border-t pt-4 mt-4 text-sm text-gray-600 space-y-1">
+            {referredBy && (
+              <div className="flex items-center gap-2">
+                <UserPlus className="text-blue-700" size={16} />
+                <span>
+                  Referred by{" "}
+                  <span className="font-medium text-blue-900">
+                    {referredBy}
+                  </span>
+                </span>
+              </div>
+            )}
+            {joinedAt && (
+              <div className="text-xs text-gray-500 pl-6">
+                Joined on {format(joinedAt, "dd MMMM yyyy, HH:mm")}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Promotion Section */}

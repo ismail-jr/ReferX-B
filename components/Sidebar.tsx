@@ -181,6 +181,17 @@ export default function Sidebar() {
               style={{ width: `${progress}%` }}
             ></div>
           </div>
+
+          {/* 🟢 Reward Message */}
+          <p className="mt-2 text-xs text-gray-600">
+            🎁 Reach{" "}
+            <span className="font-semibold text-blue-700">50 points</span> to
+            get a shopping gift card.
+            <br />
+            🏖️ Hit{" "}
+            <span className="font-semibold text-green-700">100 points</span> for
+            a chance to win a Dubai tour!
+          </p>
         </div>
 
         {/* Help + Quote */}

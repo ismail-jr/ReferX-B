@@ -42,7 +42,10 @@ export default function Main() {
     points?: number;
     referredBy?: string;
     referralCode?: string;
+    createdAt?: Date;
+    referrerName?: string;
   } | null>(null);
+
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [recentActivity, setRecentActivity] = useState<ReferralActivity[]>([]);
   const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
@@ -52,9 +55,13 @@ export default function Main() {
       const userDocRef = doc(db, "users", uid);
       const userDocSnap = await getDoc(userDocRef);
       const userData = userDocSnap.data();
-      setUserStats(userData || null);
 
-      if (userData?.referredBy) {
+      if (!userData) return;
+
+      const createdAt = userData?.createdAt?.toDate?.() || new Date();
+      let referrerName = "";
+
+      if (userData.referredBy) {
         const referrerQuery = query(
           collection(db, "users"),
           where("referralCode", "==", userData.referredBy),
@@ -63,15 +70,20 @@ export default function Main() {
         const refSnap = await getDocs(referrerQuery);
         const referrerDoc = refSnap.docs[0];
         const referrerData = referrerDoc?.exists() ? referrerDoc.data() : null;
-        const referrerName =
+        referrerName =
           referrerData?.displayName || referrerData?.email || "someone";
-        setWelcomeMessage(` You were referred by ${referrerName}. Welcome!`);
 
-        setTimeout(() => {
-          setWelcomeMessage(null);
-        }, 100);
+        setWelcomeMessage(`You were referred by ${referrerName}. Welcome!`);
+        setTimeout(() => setWelcomeMessage(null), 4000);
       }
 
+      setUserStats({
+        ...userData,
+        createdAt,
+        referrerName,
+      });
+
+      // Leaderboard
       const leaderboardQuery = query(
         collection(db, "users"),
         orderBy("points", "desc"),
@@ -93,7 +105,7 @@ export default function Main() {
             rank: index + 1,
             name,
             referrals: data.points || 0,
-            referralCode: data.referralCode || "", // ✅ Include referralCode
+            referralCode: data.referralCode || "",
           };
         }
       );
@@ -113,12 +125,13 @@ export default function Main() {
           rank: leaderboardData.length + 1,
           name: currentName,
           referrals: userData?.points || 0,
-          referralCode: userData?.referralCode || "", // ✅ Also include here
+          referralCode: userData?.referralCode || "",
         });
       }
 
       setLeaderboard(leaderboardData);
 
+      // Referral Activity
       const activityQuery = query(
         collection(db, "referrals"),
         where("referrerId", "==", userData?.referralCode),
@@ -186,6 +199,8 @@ export default function Main() {
         }
         leaderboard={leaderboard}
         recentActivity={recentActivity}
+        referredBy={userStats?.referrerName}
+        joinedAt={userStats?.createdAt}
       />
       <ReferralTools referralLink={referralLink} />
     </div>
