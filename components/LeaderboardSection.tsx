@@ -126,19 +126,19 @@ export default function LeaderboardSection({
         className="bg-gradient-to-br from-pink-50 to-fuchsia-100 rounded-xl shadow-md p-6 border border-fuchsia-200"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-fuchsia-800 flex items-center gap-2">
-            <Gift className="text-fuchsia-600" size={20} />
+          <h2 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+            <Gift className="text-blue-900" size={20} />
             Weekly Referral Rewards!
           </h2>
-          <span className="text-xs text-fuchsia-700 font-medium">
+          <span className="text-xs text-blue-900 font-medium">
             Updated Weekly
           </span>
         </div>
 
         <p className="text-sm text-gray-700 mb-5 leading-relaxed">
           🚀 Refer at least{" "}
-          <span className="font-semibold text-fuchsia-700">10 new users</span>{" "}
-          each week and stand a chance to win:
+          <span className="font-semibold text-blue-900">10 new users</span> each
+          week and stand a chance to win:
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -155,7 +155,7 @@ export default function LeaderboardSection({
               className="flex flex-col items-center bg-white border border-fuchsia-100 rounded-lg p-4 shadow-sm hover:shadow-md transition"
             >
               <div className="text-3xl mb-2">{reward.icon}</div>
-              <h4 className="text-sm font-semibold text-fuchsia-800 text-center">
+              <h4 className="text-sm font-semibold text-blue-900 text-center">
                 {reward.title}
               </h4>
             </div>
