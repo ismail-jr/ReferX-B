@@ -36,7 +36,7 @@ export default function DashboardStats({ user, stats, leaderboard }: Props) {
         />
         <StatCard name="Active Users" value={leaderboard.length} change="+5%" />
         <StatCard
-          name="Rewards Earned ($0.5/point)"
+          name="Rewards Earned (₵0.5/point)"
           value={(stats?.points || 0) * 0.5}
           change="+23%"
         />

@@ -26,6 +26,7 @@ export interface LeaderboardItem {
   rank: number;
   name: string;
   referrals: number;
+  referralCode?: string;
 }
 
 export interface ReferralActivity {
@@ -40,6 +41,7 @@ export default function Main() {
     displayName?: string;
     points?: number;
     referredBy?: string;
+    referralCode?: string;
   } | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [recentActivity, setRecentActivity] = useState<ReferralActivity[]>([]);
@@ -53,10 +55,14 @@ export default function Main() {
       setUserStats(userData || null);
 
       if (userData?.referredBy) {
-        const referrerSnap = await getDoc(
-          doc(db, "users", userData.referredBy)
+        const referrerQuery = query(
+          collection(db, "users"),
+          where("referralCode", "==", userData.referredBy),
+          limit(1)
         );
-        const referrerData = referrerSnap.exists() ? referrerSnap.data() : null;
+        const refSnap = await getDocs(referrerQuery);
+        const referrerDoc = refSnap.docs[0];
+        const referrerData = referrerDoc?.exists() ? referrerDoc.data() : null;
         const referrerName =
           referrerData?.displayName || referrerData?.email || "someone";
         setWelcomeMessage(` You were referred by ${referrerName}. Welcome!`);
@@ -87,6 +93,7 @@ export default function Main() {
             rank: index + 1,
             name,
             referrals: data.points || 0,
+            referralCode: data.referralCode || "", // ✅ Include referralCode
           };
         }
       );
@@ -106,6 +113,7 @@ export default function Main() {
           rank: leaderboardData.length + 1,
           name: currentName,
           referrals: userData?.points || 0,
+          referralCode: userData?.referralCode || "", // ✅ Also include here
         });
       }
 
@@ -113,7 +121,7 @@ export default function Main() {
 
       const activityQuery = query(
         collection(db, "referrals"),
-        where("referrerId", "==", uid),
+        where("referrerId", "==", userData?.referralCode),
         orderBy("createdAt", "desc"),
         limit(5)
       );
@@ -142,9 +150,10 @@ export default function Main() {
     return () => unsubscribe();
   }, [fetchDashboardData]);
 
-  const referralLink = user?.uid
-    ? `${process.env.NEXT_PUBLIC_BASE_URL}/join?ref=${user.uid}`
-    : "";
+  const referralLink =
+    user?.uid && userStats?.referralCode
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}/join?ref=${userStats.referralCode}`
+      : "";
 
   return (
     <div className="space-y-6 pl-5">

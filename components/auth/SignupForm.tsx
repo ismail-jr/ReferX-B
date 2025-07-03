@@ -15,7 +15,15 @@ import {
   AuthError,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  query,
+  where,
+  getDocs,
+  collection,
+} from "firebase/firestore";
 import { parseFirebaseError } from "@/utils/ParseFirebaseError";
 import { handleReferral } from "@/utils/HandleReferral";
 import { BrandHeader } from "../BrandHeader";
@@ -24,6 +32,7 @@ import { SocialButtons } from "../SocialButtons";
 import { SignUpInput } from "../SignUpInput";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { AuthDivider } from "../AuthDivider";
+import { nanoid } from "nanoid";
 
 export default function SignupForm() {
   const [name, setName] = useState("");
@@ -37,6 +46,17 @@ export default function SignupForm() {
   const searchParams = useSearchParams();
   const ref = searchParams.get("ref");
 
+  const generateUniqueReferralCode = async (): Promise<string> => {
+    let code = nanoid(8);
+    const existing = await getDocs(
+      query(collection(db, "users"), where("referralCode", "==", code))
+    );
+    while (!existing.empty) {
+      code = nanoid(8);
+    }
+    return code;
+  };
+
   const createUserRecord = async (
     user: User,
     name: string,
@@ -46,11 +66,14 @@ export default function SignupForm() {
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
+      const newReferralCode = await generateUniqueReferralCode();
+
       const userData = {
         email: user.email,
         displayName: name || user.displayName || "",
         photoURL: user.photoURL || "",
         points: 0,
+        referralCode: newReferralCode,
         createdAt: new Date(),
         ...(referralCode && { referredBy: referralCode }),
       };

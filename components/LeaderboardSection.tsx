@@ -7,6 +7,7 @@ export interface LeaderboardItem {
   rank: number;
   name: string;
   referrals: number;
+  referralCode?: string;
 }
 
 export interface ReferralActivity {
@@ -24,7 +25,6 @@ interface LeaderboardSectionProps {
 export default function LeaderboardSection({
   userName,
   leaderboard,
-  recentActivity,
 }: LeaderboardSectionProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -56,23 +56,30 @@ export default function LeaderboardSection({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div className="flex items-center space-x-3">
-                  <span className="w-6 h-6 flex items-center justify-center">
-                    {icon || (
-                      <span className="w-6 h-6 rounded-full text-xs bg-gray-100 text-gray-600 flex items-center justify-center">
-                        {item.rank}
-                      </span>
-                    )}
-                  </span>
-                  <span
-                    className={
-                      isCurrentUser
-                        ? "font-medium text-blue-900"
-                        : "text-gray-700"
-                    }
-                  >
-                    {item.name}
-                  </span>
+                <div className="flex flex-col">
+                  <div className="flex items-center space-x-3">
+                    <span className="w-6 h-6 flex items-center justify-center">
+                      {icon || (
+                        <span className="w-6 h-6 rounded-full text-xs bg-gray-100 text-gray-600 flex items-center justify-center">
+                          {item.rank}
+                        </span>
+                      )}
+                    </span>
+                    <span
+                      className={
+                        isCurrentUser
+                          ? "font-medium text-blue-900"
+                          : "text-gray-700"
+                      }
+                    >
+                      {item.name}
+                    </span>
+                  </div>
+                  {item.referralCode && (
+                    <span className="text-xs text-gray-500 pl-7">
+                      Referral Code: <code>{item.referralCode}</code>
+                    </span>
+                  )}
                 </div>
                 <span className="text-sm text-gray-600">
                   {item.referrals} referrals
@@ -83,40 +90,53 @@ export default function LeaderboardSection({
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Promotion Section */}
       <motion.div
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
+        className="bg-gradient-to-br from-pink-50 to-fuchsia-100 rounded-xl shadow-md p-6 border border-fuchsia-200"
       >
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-          Recent Activity
-        </h2>
-        <div className="space-y-4">
-          {recentActivity.length > 0 ? (
-            recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start">
-                <div className="bg-fuchsia-100 p-2 rounded-lg mr-3">
-                  <Gift className="text-fuchsia-600" size={16} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-800">
-                    {activity.newUserEmail}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Referred • {new Date(activity.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-sm font-medium text-fuchsia-600">
-                  +1 point
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-500">No recent activity yet.</p>
-          )}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-fuchsia-800 flex items-center gap-2">
+            <Gift className="text-fuchsia-600" size={20} />
+            Weekly Referral Rewards!
+          </h2>
+          <span className="text-xs text-fuchsia-700 font-medium">
+            Updated Weekly
+          </span>
         </div>
+
+        <p className="text-sm text-gray-700 mb-5 leading-relaxed">
+          🚀 Refer at least{" "}
+          <span className="font-semibold text-fuchsia-700">10 new users</span>{" "}
+          each week and stand a chance to win:
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {[
+            { icon: "💵", title: "₵500 Cash" },
+            { icon: "📱", title: "Smartphone" },
+            { icon: "👕", title: "ReferX T-Shirt" },
+            { icon: "❄️", title: "Fridge" },
+            { icon: "💻", title: "Laptop" },
+            { icon: "🎧", title: "Headphones" },
+          ].map((reward, index) => (
+            <div
+              key={index}
+              className="flex flex-col items-center bg-white border border-fuchsia-100 rounded-lg p-4 shadow-sm hover:shadow-md transition"
+            >
+              <div className="text-3xl mb-2">{reward.icon}</div>
+              <h4 className="text-sm font-semibold text-fuchsia-800 text-center">
+                {reward.title}
+              </h4>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-center text-xs mt-6 text-gray-500">
+          📣 Top referrers are reviewed every Sunday.
+        </p>
       </motion.div>
     </div>
   );

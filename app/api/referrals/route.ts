@@ -1,138 +1,140 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import {
-  db,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  query,
-  where,
-  increment,
   collection,
-} from '@/lib/firebase';
-import { UpdateData } from 'firebase/firestore';
-
-interface ReferralData {
-  referrerId: string;
-  newUserUID: string;
-  newUserEmail: string;
-  newUserIP: string;
-  newUserName?: string;
-}
+  doc,
+  getDocs,
+  increment,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+  type UpdateData,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface UserData {
-  email?: string;
+  email: string;
   displayName?: string;
-  referredBy?: string;
   points?: number;
-  createdAt?: Date;
+  referredBy?: string;
+  referralCode?: string;
   milestone?: string;
+  createdAt?: Date;
 }
 
-const getTimestamp = () => new Date().toISOString();
+interface ReferralData {
+  newUserEmail: string;
+  newUserUID: string;
+  newUserName?: string;
+  referrerId: string; // this is the referralCode used
+}
+
+const milestones: Record<number, string> = {
+  5: "Bronze",
+  10: "Silver",
+  20: "Gold",
+  50: "Platinum",
+};
+
+function generateReferralCode(uid: string): string {
+  return uid.slice(0, 6) + Math.floor(100 + Math.random() * 900).toString();
+}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      referrerId,
-      newUserUID,
+    const { newUserEmail, newUserUID, newUserName, referrerId }: ReferralData = body;
+
+    if (!newUserEmail || !newUserUID || !referrerId) {
+      return NextResponse.json(
+        { error: "Missing required fields." },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Check if referral already exists (same user)
+    const duplicateQuery = query(
+      collection(db, "referrals"),
+      where("newUserUID", "==", newUserUID)
+    );
+    const duplicateSnap = await getDocs(duplicateQuery);
+
+    if (!duplicateSnap.empty) {
+      return NextResponse.json(
+        { error: "User has already been referred." },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Save referral entry
+    await setDoc(doc(db, "referrals", newUserUID), {
       newUserEmail,
-      newUserIP,
+      newUserUID,
       newUserName,
-    } = body as ReferralData;
-
-    if (!referrerId || !newUserUID || !newUserEmail || !newUserIP) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    // 🚫 Prevent self-referral
-    if (referrerId === newUserUID) {
-      return NextResponse.json({ error: 'You cannot refer yourself.' }, { status: 400 });
-    }
-
-    const referralsRef = collection(db, 'referrals');
-
-    // 🛡 Optional: Enable fraud checks in production
-    
-    const emailCheck = await getDocs(query(referralsRef, where('newUserEmail', '==', newUserEmail)));
-    if (!emailCheck.empty) {
-      return NextResponse.json({ error: 'This email has already been referred.' }, { status: 400 });
-    }
-
-    const ipCheck = await getDocs(query(referralsRef, where('newUserIP', '==', newUserIP)));
-    if (!ipCheck.empty) {
-      return NextResponse.json({ error: 'This IP Address has already been used for referral. Try new device ' }, { status: 400 });
-    }
-    
-
-    // ✅ Save referral record
-    const newRef = doc(referralsRef);
-    await setDoc(newRef, {
       referrerId,
-      newUserUID,
-      newUserEmail,
-      newUserIP,
-      createdAt: getTimestamp(),
+      createdAt: new Date(),
     });
 
-    // ✅ Save referred user profile with name
-    const newUserDoc = doc(db, 'users', newUserUID);
+    let referrerName = "Someone";
+    let milestoneUnlocked: string | null = null;
+
+    // ✅ Find referrer by referralCode
+    const refQuery = query(
+      collection(db, "users"),
+      where("referralCode", "==", referrerId)
+    );
+    const refSnap = await getDocs(refQuery);
+
+    if (!refSnap.empty) {
+      const referrerDoc = refSnap.docs[0];
+      const referrerData = referrerDoc.data() as UserData;
+
+      const currentPoints = referrerData.points || 0;
+      const newPoints = currentPoints + 1;
+
+      const updateFields: UpdateData<UserData> = {
+        points: increment(1),
+      };
+
+      // ✅ Add referralCode if missing
+      if (!referrerData.referralCode) {
+        updateFields.referralCode = generateReferralCode(referrerDoc.id);
+      }
+
+      // ✅ Milestone unlock
+      if (milestones[newPoints]) {
+        updateFields.milestone = milestones[newPoints];
+        milestoneUnlocked = milestones[newPoints];
+      }
+
+      await updateDoc(doc(db, "users", referrerDoc.id), updateFields);
+      referrerName = referrerData.displayName || referrerData.email || "Someone";
+    }
+
+    // ✅ Save referred user's data with a referralCode
+    const referredUserDoc = doc(db, "users", newUserUID);
     await setDoc(
-      newUserDoc,
+      referredUserDoc,
       {
         email: newUserEmail,
-        displayName: newUserName || '',
+        displayName: newUserName || "",
         referredBy: referrerId,
         createdAt: new Date(),
+        referralCode: generateReferralCode(newUserUID),
       },
       { merge: true }
     );
 
-    // ✅ Update referrer points and milestones
-    const referrerDoc = doc(db, 'users', referrerId);
-    const referrerSnap = await getDoc(referrerDoc);
-
-    const milestones: Record<number, string> = {
-      5: 'Bronze',
-      10: 'Silver',
-      20: 'Gold',
-    };
-
-    let milestoneUnlocked: string | null = null;
-    let referrerName = 'Your referrer';
-
-    if (referrerSnap.exists()) {
-      const data = referrerSnap.data() as UserData;
-      const currentPoints = data.points || 0;
-      const newPoints = currentPoints + 1;
-      referrerName = data.displayName || data.email || 'Someone';
-
-      const updates: UpdateData<UserData> = {
-        points: increment(1),
-      };
-
-      if (milestones[newPoints]) {
-        updates.milestone = milestones[newPoints];
-        milestoneUnlocked = milestones[newPoints];
-      }
-
-      await updateDoc(referrerDoc, updates);
-    } else {
-      await setDoc(referrerDoc, {
-        points: 1,
-        createdAt: new Date(),
-      } as UserData);
-    }
-
     return NextResponse.json({
-      success: true,
-      milestone: milestoneUnlocked,
-      message: `You were referred by ${referrerName}, welcome!`,
+      message: "Referral recorded.",
+      referrerName,
+      milestoneUnlocked,
     });
-  } catch (err) {
-    console.error('Referral API Error:', err);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (error) {
+    console.error("Referral error:", error);
+    return NextResponse.json(
+      { error: "Internal server error." },
+      { status: 500 }
+    );
   }
 }

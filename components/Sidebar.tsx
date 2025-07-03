@@ -1,12 +1,9 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  HelpCircle,
   User,
   LogOut,
   Menu,
@@ -16,6 +13,7 @@ import {
   TrendingUp,
   Target,
   HandCoins,
+  ShoppingBag,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
@@ -47,16 +45,23 @@ export default function Sidebar() {
     {
       path: "/dashboard",
       name: "Dashboard",
-      icon: <LayoutDashboard size={18} className="text-white" />,
+      icon: <LayoutDashboard size={18} />,
+    },
+    {
+      path: "/shop",
+      name: "Shop",
+      icon: <ShoppingBag size={18} />,
     },
   ];
 
-  const linkClass = (path: string) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-      pathname === path
+  const linkClass = (path: string) => {
+    const isActive = pathname.startsWith(path);
+    return `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+      isActive
         ? "bg-blue-900 text-white font-medium"
         : "text-gray-600 hover:bg-gray-50"
     }`;
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -122,17 +127,22 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="space-y-1 mb-6">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={linkClass(item.path)}
-              onClick={() => setIsOpen(false)}
-            >
-              <span className="text-blue-900">{item.icon}</span>
-              <span>{item.name}</span>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={linkClass(item.path)}
+                onClick={() => setIsOpen(false)}
+              >
+                <span className={isActive ? "text-white" : "text-blue-900"}>
+                  {item.icon}
+                </span>
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Stats */}
@@ -144,7 +154,7 @@ export default function Sidebar() {
           <div className="flex justify-between items-center text-gray-700">
             <span>Rewards</span>
             <span className="font-semibold text-green-600">
-              ${rewardAmount}
+              ₵{rewardAmount}
             </span>
           </div>
           {milestone && (
@@ -175,12 +185,13 @@ export default function Sidebar() {
 
         {/* Help + Quote */}
         <div className="mt-auto text-sm border-t py-6">
-          <Link
-            href="/help"
+          {/* <Link
+            href="/admin"
             className="flex items-center gap-2 text-blue-600 hover:underline mb-3"
           >
-            <HelpCircle size={16} /> Need Help?
-          </Link>
+            <HelpCircle size={16} /> Admin
+          </Link> */}
+
           <div className="bg-blue-50 text-blue-900 p-3 rounded-lg text-xs italic flex items-center gap-2">
             <Target size={14} /> {quote}
           </div>
