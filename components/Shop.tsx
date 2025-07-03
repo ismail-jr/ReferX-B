@@ -26,39 +26,55 @@ export interface ReferralActivity {
   createdAt: Date;
 }
 
+interface UserStats {
+  displayName: string;
+  rewards: number;
+  referredBy: string;
+  referralCode: string;
+}
+
 export default function Shop() {
   const [user, setUser] = useState<User | null>(null);
-  const [userStats, setUserStats] = useState<{
-    displayName?: string;
-    rewards?: number;
-    referredBy?: string;
-    referralCode?: string;
-  } | null>(null);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
 
   const fetchDashboardData = useCallback(async (uid: string) => {
-    const userDocRef = doc(db, "users", uid);
-    const userDocSnap = await getDoc(userDocRef);
-    const userData = userDocSnap.data();
-    setUserStats(userData || null);
+    try {
+      const userDocRef = doc(db, "users", uid);
+      const userDocSnap = await getDoc(userDocRef);
+      const userData = userDocSnap.data();
 
-    if (userData?.referredBy) {
-      const referrerQuery = query(
-        collection(db, "users"),
-        where("referralCode", "==", userData.referredBy),
-        limit(1)
-      );
-      const refSnap = await getDocs(referrerQuery);
-      const referrerDoc = refSnap.docs[0];
-      const referrerData = referrerDoc?.exists() ? referrerDoc.data() : null;
-      const referrerName =
-        referrerData?.displayName || referrerData?.email || "someone";
-      setWelcomeMessage(`You were referred by ${referrerName}. Welcome!`);
+      if (userData) {
+        const stats: UserStats = {
+          displayName: userData.displayName || "",
+          rewards: userData.points || 0,
+          referredBy: userData.referredBy || "",
+          referralCode: userData.referralCode || "",
+        };
 
-      setTimeout(() => {
-        setWelcomeMessage(null);
-      }, 6000);
+        setUserStats(stats);
+
+        if (stats.referredBy) {
+          const referrerQuery = query(
+            collection(db, "users"),
+            where("referralCode", "==", stats.referredBy),
+            limit(1)
+          );
+          const refSnap = await getDocs(referrerQuery);
+          const referrerDoc = refSnap.docs[0];
+          const referrerData = referrerDoc?.data();
+
+          const referrerName =
+            referrerData?.displayName || referrerData?.email || "someone";
+
+          setWelcomeMessage(`You were referred by ${referrerName}. Welcome!`);
+          setTimeout(() => setWelcomeMessage(null), 6000);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      toast.error("Failed to load your dashboard data.");
     }
   }, []);
 
@@ -102,13 +118,13 @@ export default function Shop() {
 
       if (result.success) {
         toast.success(result.message);
-        await fetchDashboardData(user.uid);
+        await fetchDashboardData(user.uid); // Refresh stats after claiming
       } else {
         toast.error(result.message);
       }
     } catch (err) {
-      toast.error("Something went wrong while claiming this item.");
       console.error("Claim error:", err);
+      toast.error("Something went wrong while claiming this item.");
     }
   };
 

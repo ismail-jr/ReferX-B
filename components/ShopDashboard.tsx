@@ -6,18 +6,27 @@ import type { User } from "firebase/auth";
 
 interface Props {
   user: User | null;
-  stats: { rewards?: number } | null;
+  stats: {
+    rewards?: number;
+    displayName?: string;
+    referralCode?: string;
+    referredBy?: string;
+  } | null;
   itemsCount: number;
 }
 
+const REWARD_VALUE_PER_POINT = 0.5;
+
 export default function ShopDashboardStats({ user, stats, itemsCount }: Props) {
   const points = stats?.rewards ?? 0;
-  const rewardsValue = points * 0.5;
+  const rewardsValue = points * REWARD_VALUE_PER_POINT;
+  const displayName =
+    stats?.displayName || user?.displayName || user?.email || "Friend";
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 pt-9">
       <h1 className="text-3xl font-semibold text-blue-900">
-        👋 Welcome back, {user?.displayName || user?.email || "Friend"}!
+        👋 Welcome back, {displayName}!
       </h1>
       <p className="text-gray-600 mt-1">
         Here&apos;s your reward progress and shopping insights.
@@ -26,18 +35,20 @@ export default function ShopDashboardStats({ user, stats, itemsCount }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <StatCard name="Total Points" value={points} change="+12%" />
         <StatCard
-          name="Total Rewards (₵0.5 per point)"
+          name={`Total Rewards (₵${REWARD_VALUE_PER_POINT} per point)`}
           value={rewardsValue}
           prefix="₵"
           decimals={2}
           change="+20%"
         />
         <StatCard name="Items in Shop" value={itemsCount} change="🛒 Updated" />
-        <StatCard
-          name="Claim Opportunities"
-          value={Math.floor(points / 5)}
-          change="🎁 Ready"
-        />
+        {points > 0 && (
+          <StatCard
+            name="Claim Opportunities"
+            value={Math.floor(points / 5)}
+            change="🎁 Ready"
+          />
+        )}
       </div>
     </div>
   );
@@ -62,7 +73,7 @@ function StatCard({
     const end = Number(value);
     if (isNaN(end)) return;
 
-    const duration = 1000; // Animation duration in ms
+    const duration = 1000;
     const startTime = performance.now();
 
     const animate = (currentTime: number) => {
@@ -75,15 +86,12 @@ function StatCard({
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
-        setCount(end); // Ensure final value is exact
+        setCount(end);
       }
     };
 
     const animationId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(animationId);
-    };
+    return () => cancelAnimationFrame(animationId);
   }, [value, decimals]);
 
   return (
