@@ -11,7 +11,7 @@ import { BrandHeader } from "@/components/BrandHeader";
 export default function VerifyEmailClient() {
   const [resending, setResending] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(120); // ⬅️ Increased to 120 seconds
   const [email, setEmail] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,7 +53,7 @@ export default function VerifyEmailClient() {
           handleCodeInApp: true,
         });
         toast.success(`Verification email resent to ${user.email}`);
-        setCountdown(60);
+        setCountdown(120); // ⬅️ Reset to 120 seconds after resend
       } catch {
         toast.error("Failed to resend verification email");
       } finally {
